@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - './prometheus.yml:/etc/prometheus/prometheus.yml:ro' # Mount the config file
+      - 'prometheus_data:/prometheus' # Persist Prometheus data
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    # Use 'host' network mode to monitor the host system
+    network_mode: host 
+    pid: host # Required for host-level process metrics
+    volumes:
+      # Mount the host's root filesystem to the container's /host path
+      - '/:/host:ro,rslave' 
+    command:
+      # Tell node-exporter to use the mounted /host path
+      - '--path.rootfs=/host' 
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
